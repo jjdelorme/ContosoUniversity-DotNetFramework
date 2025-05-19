@@ -7,6 +7,7 @@ using System.Web.Optimization;
 using System.Web.Routing;
 using ContosoUniversity.DAL;
 using System.Data.Entity.Infrastructure.Interception;
+// using ContosoUniversity; // Not strictly needed if UnityConfig is in the same namespace, but good for clarity.
 
 namespace ContosoUniversity
 {
@@ -20,6 +21,7 @@ namespace ContosoUniversity
             BundleConfig.RegisterBundles(BundleTable.Bundles);
             DbInterception.Add(new SchoolInterceptorTransientErrors());
             DbInterception.Add(new SchoolInterceptorLogging());
+            UnityConfig.RegisterComponents(); // Added Unity configuration
         }
     }
 }

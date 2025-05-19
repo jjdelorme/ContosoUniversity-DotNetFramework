@@ -15,14 +15,19 @@ namespace ContosoUniversity.Controllers
 {
     public class InstructorController : Controller
     {
-        private SchoolContext db = new SchoolContext();
+        private readonly ISchoolContext _context;
+
+        public InstructorController(ISchoolContext context)
+        {
+            _context = context;
+        }
 
         // GET: Instructor
         public ActionResult Index(int? id, int? courseID)
         {
             var viewModel = new InstructorIndexData();
 
-            viewModel.Instructors = db.Instructors
+            viewModel.Instructors = _context.Instructors
                 .Include(i => i.OfficeAssignment)
                 .Include(i => i.Courses.Select(c => c.Department))
                 .OrderBy(i => i.LastName);
@@ -42,10 +47,10 @@ namespace ContosoUniversity.Controllers
                 //    x => x.CourseID == courseID).Single().Enrollments;
                 // Explicit loading
                 var selectedCourse = viewModel.Courses.Where(x => x.CourseID == courseID).Single();
-                db.Entry(selectedCourse).Collection(x => x.Enrollments).Load();
+                _context.Entry(selectedCourse).Collection(x => x.Enrollments).Load();
                 foreach (Enrollment enrollment in selectedCourse.Enrollments)
                 {
-                    db.Entry(enrollment).Reference(x => x.Student).Load();
+                    _context.Entry(enrollment).Reference(x => x.Student).Load();
                 }
 
                 viewModel.Enrollments = selectedCourse.Enrollments;
@@ -62,7 +67,7 @@ namespace ContosoUniversity.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Instructor instructor = db.Instructors.Find(id);
+            Instructor instructor = _context.Instructors.Find(id);
             if (instructor == null)
             {
                 return HttpNotFound();
@@ -87,14 +92,14 @@ namespace ContosoUniversity.Controllers
                 instructor.Courses = new List<Course>();
                 foreach (var course in selectedCourses)
                 {
-                    var courseToAdd = db.Courses.Find(int.Parse(course));
+                    var courseToAdd = _context.Courses.Find(int.Parse(course));
                     instructor.Courses.Add(courseToAdd);
                 }
             }
             if (ModelState.IsValid)
             {
-                db.Instructors.Add(instructor);
-                db.SaveChanges();
+                _context.Instructors.Add(instructor);
+                _context.SaveChanges();
                 return RedirectToAction("Index");
             }
             PopulateAssignedCourseData(instructor);
@@ -109,7 +114,7 @@ namespace ContosoUniversity.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Instructor instructor = db.Instructors
+            Instructor instructor = _context.Instructors
                 .Include(i => i.OfficeAssignment)
                 .Include(i => i.Courses)
                 .Where(i => i.ID == id)
@@ -124,7 +129,7 @@ namespace ContosoUniversity.Controllers
 
         private void PopulateAssignedCourseData(Instructor instructor)
         {
-            var allCourses = db.Courses;
+            var allCourses = _context.Courses;
             var instructorCourses = new HashSet<int>(instructor.Courses.Select(c => c.CourseID));
             var viewModel = new List<AssignedCourseData>();
             foreach (var course in allCourses)
@@ -149,7 +154,7 @@ namespace ContosoUniversity.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            var instructorToUpdate = db.Instructors
+            var instructorToUpdate = _context.Instructors
                .Include(i => i.OfficeAssignment)
                .Include(i => i.Courses)
                .Where(i => i.ID == id)
@@ -167,7 +172,7 @@ namespace ContosoUniversity.Controllers
 
                     UpdateInstructorCourses(selectedCourses, instructorToUpdate);
 
-                    db.SaveChanges();
+                    _context.SaveChanges();
 
                     return RedirectToAction("Index");
                 }
@@ -191,7 +196,7 @@ namespace ContosoUniversity.Controllers
             var selectedCoursesHS = new HashSet<string>(selectedCourses);
             var instructorCourses = new HashSet<int>
                 (instructorToUpdate.Courses.Select(c => c.CourseID));
-            foreach (var course in db.Courses)
+            foreach (var course in _context.Courses)
             {
                 if (selectedCoursesHS.Contains(course.CourseID.ToString()))
                 {
@@ -219,7 +224,7 @@ namespace ContosoUniversity.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Instructor instructor = db.Instructors.Find(id);
+            Instructor instructor = _context.Instructors.Find(id);
             if (instructor == null)
             {
                 return HttpNotFound();
@@ -232,15 +237,15 @@ namespace ContosoUniversity.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            Instructor instructor = db.Instructors
+            Instructor instructor = _context.Instructors
               .Include(i => i.OfficeAssignment)
               .Where(i => i.ID == id)
               .Single();
 
             instructor.OfficeAssignment = null;
-            db.Instructors.Remove(instructor);
+            _context.Instructors.Remove(instructor);
 
-            var department = db.Departments
+            var department = _context.Departments
                 .Where(d => d.InstructorID == id)
                 .SingleOrDefault();
             if (department != null)
@@ -248,16 +253,9 @@ namespace ContosoUniversity.Controllers
                 department.InstructorID = null;
             }
 
-            db.SaveChanges();
+            _context.SaveChanges();
             return RedirectToAction("Index");
         }
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                db.Dispose();
-            }
-            base.Dispose(disposing);
-        }
+        // Removed Dispose method as Unity will handle it
     }
 }

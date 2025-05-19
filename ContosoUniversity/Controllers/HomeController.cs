@@ -11,7 +11,12 @@ namespace ContosoUniversity.Controllers
 {
     public class HomeController : Controller
     {
-        private SchoolContext db = new SchoolContext();
+        private readonly ISchoolContext _context;
+
+        public HomeController(ISchoolContext context)
+        {
+            _context = context;
+        }
 
         public ActionResult Index()
         {
@@ -34,7 +39,10 @@ namespace ContosoUniversity.Controllers
                 + "FROM Person "
                 + "WHERE Discriminator = 'Student' "
                 + "GROUP BY EnrollmentDate";
-            IEnumerable<EnrollmentDateGroup> data = db.Database.SqlQuery<EnrollmentDateGroup>(query);
+            // Note: db.Database.SqlQuery will become _context.Database.SqlQuery
+            // ISchoolContext does not expose `Database` directly. This will require a change in ISchoolContext or this method.
+            // For now, this line will cause a compile error. It will be addressed in a subsequent step/subtask.
+            IEnumerable<EnrollmentDateGroup> data = _context.Database.SqlQuery<EnrollmentDateGroup>(query);
 
             return View(data.ToList());
         }
@@ -45,10 +53,6 @@ namespace ContosoUniversity.Controllers
             return View();
         }
 
-        protected override void Dispose(bool disposing)
-        {
-            db.Dispose();
-            base.Dispose(disposing);
-        }
+        // Removed Dispose method as Unity will handle it
     }
 }

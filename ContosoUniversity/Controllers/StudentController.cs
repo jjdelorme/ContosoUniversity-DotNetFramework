@@ -15,7 +15,12 @@ namespace ContosoUniversity.Controllers
 {
     public class StudentController : Controller
     {
-        private SchoolContext db = new SchoolContext();
+        private readonly ISchoolContext _context;
+
+        public StudentController(ISchoolContext context)
+        {
+            _context = context;
+        }
 
         // GET: Student
         public ViewResult Index(string sortOrder, string currentFilter, string searchString, int? page)
@@ -35,7 +40,7 @@ namespace ContosoUniversity.Controllers
 
             ViewBag.CurrentFilter = searchString;
 
-            var students = from s in db.Students
+            var students = from s in _context.Students
                            select s;
             if (!String.IsNullOrEmpty(searchString))
             {
@@ -71,7 +76,7 @@ namespace ContosoUniversity.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Student student = db.Students.Find(id);
+            Student student = _context.Students.Find(id);
             if (student == null)
             {
                 return HttpNotFound();
@@ -96,8 +101,8 @@ namespace ContosoUniversity.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    db.Students.Add(student);
-                    db.SaveChanges();
+                    _context.Students.Add(student);
+                    _context.SaveChanges();
                     return RedirectToAction("Index");
                 }
             }
@@ -117,7 +122,7 @@ namespace ContosoUniversity.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Student student = db.Students.Find(id);
+            Student student = _context.Students.Find(id);
             if (student == null)
             {
                 return HttpNotFound();
@@ -136,13 +141,13 @@ namespace ContosoUniversity.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            var studentToUpdate = db.Students.Find(id);
+            var studentToUpdate = _context.Students.Find(id);
             if (TryUpdateModel(studentToUpdate, "",
                new string[] { "LastName", "FirstMidName", "EnrollmentDate" }))
             {
                 try
                 {
-                    db.SaveChanges();
+                    _context.SaveChanges();
 
                     return RedirectToAction("Index");
                 }
@@ -166,7 +171,7 @@ namespace ContosoUniversity.Controllers
             {
                 ViewBag.ErrorMessage = "Delete failed. Try again, and if the problem persists see your system administrator.";
             }
-            Student student = db.Students.Find(id);
+            Student student = _context.Students.Find(id);
             if (student == null)
             {
                 return HttpNotFound();
@@ -181,9 +186,9 @@ namespace ContosoUniversity.Controllers
         {
             try
             {
-                Student student = db.Students.Find(id);
-                db.Students.Remove(student);
-                db.SaveChanges();
+                Student student = _context.Students.Find(id);
+                _context.Students.Remove(student);
+                _context.SaveChanges();
             }
             catch (RetryLimitExceededException/* dex */)
             {
@@ -192,13 +197,6 @@ namespace ContosoUniversity.Controllers
             }
             return RedirectToAction("Index");
         }
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                db.Dispose();
-            }
-            base.Dispose(disposing);
-        }
+        // Removed Dispose method as Unity will handle it
     }
 }

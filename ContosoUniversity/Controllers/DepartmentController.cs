@@ -15,12 +15,17 @@ namespace ContosoUniversity.Controllers
 {
     public class DepartmentController : Controller
     {
-        private SchoolContext db = new SchoolContext();
+        private readonly ISchoolContext _context;
+
+        public DepartmentController(ISchoolContext context)
+        {
+            _context = context;
+        }
 
         // GET: Department
         public async Task<ActionResult> Index()
         {
-            var departments = db.Departments.Include(d => d.Administrator);
+            var departments = _context.Departments.Include(d => d.Administrator);
             return View(await departments.ToListAsync());
         }
 
@@ -33,11 +38,11 @@ namespace ContosoUniversity.Controllers
             }
 
             // Commenting out original code to show how to use a raw SQL query.
-            //Department department = await db.Departments.FindAsync(id);
+            //Department department = await _context.Departments.FindAsync(id);
 
             // Create and execute raw SQL query.
             string query = "SELECT * FROM Department WHERE DepartmentID = @p0";
-            Department department = await db.Departments.SqlQuery(query, id).SingleOrDefaultAsync();
+            Department department = await _context.Departments.SqlQuery(query, id).SingleOrDefaultAsync();
 
             if (department == null)
             {
@@ -49,7 +54,7 @@ namespace ContosoUniversity.Controllers
         // GET: Department/Create
         public ActionResult Create()
         {
-            ViewBag.InstructorID = new SelectList(db.Instructors, "ID", "FullName");
+            ViewBag.InstructorID = new SelectList(_context.Instructors, "ID", "FullName");
             return View();
         }
 
@@ -62,12 +67,12 @@ namespace ContosoUniversity.Controllers
         {
             if (ModelState.IsValid)
             {
-                db.Departments.Add(department);
-                await db.SaveChangesAsync();
+                _context.Departments.Add(department);
+                await _context.SaveChangesAsync();
                 return RedirectToAction("Index");
             }
 
-            ViewBag.InstructorID = new SelectList(db.Instructors, "ID", "FullName", department.InstructorID);
+            ViewBag.InstructorID = new SelectList(_context.Instructors, "ID", "FullName", department.InstructorID);
             return View(department);
         }
 
@@ -78,12 +83,12 @@ namespace ContosoUniversity.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Department department = await db.Departments.FindAsync(id);
+            Department department = await _context.Departments.FindAsync(id);
             if (department == null)
             {
                 return HttpNotFound();
             }
-            ViewBag.InstructorID = new SelectList(db.Instructors, "ID", "FullName", department.InstructorID);
+            ViewBag.InstructorID = new SelectList(_context.Instructors, "ID", "FullName", department.InstructorID);
             return View(department);
         }
 
@@ -101,14 +106,14 @@ namespace ContosoUniversity.Controllers
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
 
-            var departmentToUpdate = await db.Departments.FindAsync(id);
+            var departmentToUpdate = await _context.Departments.FindAsync(id);
             if (departmentToUpdate == null)
             {
                 Department deletedDepartment = new Department();
                 TryUpdateModel(deletedDepartment, fieldsToBind);
                 ModelState.AddModelError(string.Empty,
                     "Unable to save changes. The department was deleted by another user.");
-                ViewBag.InstructorID = new SelectList(db.Instructors, "ID", "FullName", deletedDepartment.InstructorID);
+                ViewBag.InstructorID = new SelectList(_context.Instructors, "ID", "FullName", deletedDepartment.InstructorID);
                 return View(deletedDepartment);
             }
 
@@ -116,8 +121,8 @@ namespace ContosoUniversity.Controllers
             {
                 try
                 {
-                    db.Entry(departmentToUpdate).OriginalValues["RowVersion"] = rowVersion;
-                    await db.SaveChangesAsync();
+                    _context.Entry(departmentToUpdate).OriginalValues["RowVersion"] = rowVersion;
+                    await _context.SaveChangesAsync();
 
                     return RedirectToAction("Index");
                 }
@@ -146,7 +151,7 @@ namespace ContosoUniversity.Controllers
                                 + String.Format("{0:d}", databaseValues.StartDate));
                         if (databaseValues.InstructorID != clientValues.InstructorID)
                             ModelState.AddModelError("InstructorID", "Current value: "
-                                + db.Instructors.Find(databaseValues.InstructorID).FullName);
+                                + _context.Instructors.Find(databaseValues.InstructorID).FullName);
                         ModelState.AddModelError(string.Empty, "The record you attempted to edit "
                             + "was modified by another user after you got the original value. The "
                             + "edit operation was canceled and the current values in the database "
@@ -161,7 +166,7 @@ namespace ContosoUniversity.Controllers
                     ModelState.AddModelError("", "Unable to save changes. Try again, and if the problem persists, see your system administrator.");
                 }
             }
-            ViewBag.InstructorID = new SelectList(db.Instructors, "ID", "FullName", departmentToUpdate.InstructorID);
+            ViewBag.InstructorID = new SelectList(_context.Instructors, "ID", "FullName", departmentToUpdate.InstructorID);
             return View(departmentToUpdate);
         }
 
@@ -172,7 +177,7 @@ namespace ContosoUniversity.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Department department = await db.Departments.FindAsync(id);
+            Department department = await _context.Departments.FindAsync(id);
             if (department == null)
             {
                 if (concurrencyError.GetValueOrDefault())
@@ -202,8 +207,8 @@ namespace ContosoUniversity.Controllers
         {
             try
             {
-                db.Entry(department).State = EntityState.Deleted;
-                await db.SaveChangesAsync();
+                _context.Entry(department).State = EntityState.Deleted;
+                await _context.SaveChangesAsync();
                 return RedirectToAction("Index");
             }
             catch (DbUpdateConcurrencyException)
@@ -219,13 +224,6 @@ namespace ContosoUniversity.Controllers
         }
 
 
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                db.Dispose();
-            }
-            base.Dispose(disposing);
-        }
+        // Removed Dispose method as Unity will handle it
     }
 }
