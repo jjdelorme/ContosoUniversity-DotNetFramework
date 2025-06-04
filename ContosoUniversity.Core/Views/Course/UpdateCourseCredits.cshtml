@@ -1,0 +1,26 @@
+@{
+    ViewData["Title"] = "UpdateCourseCredits";
+}
+
+<h2>Update Course Credits</h2>
+
+@if (ViewData["RowsAffected"] != null)
+{
+    <p>
+        Number of rows updated: @ViewData["RowsAffected"]
+    </p>
+}
+
+<form asp-action="UpdateCourseCredits">
+    <div class="form-group">
+        <label>Enter a number to multiply every course's credits by: </label>
+        <input type="number" name="multiplier" value="" class="form-control" style="width: 100px" />
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Update" class="btn btn-primary" />
+    </div>
+</form>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>

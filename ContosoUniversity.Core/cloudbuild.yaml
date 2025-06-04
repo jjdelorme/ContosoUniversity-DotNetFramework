@@ -1,0 +1,61 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: 
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/contoso-university:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/contoso-university:latest'
+      - '.'
+    dir: 'ContosoUniversity.Core'
+
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'gcr.io/$PROJECT_ID/contoso-university'
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'contoso-university'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/contoso-university:$COMMIT_SHA'
+      - '--region'
+      - '$_DEPLOY_REGION'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'ASPNETCORE_ENVIRONMENT=Production'
+      - '--set-secrets'
+      - 'ConnectionStrings__DefaultConnection=contoso-db-connection:latest'
+      - '--set-secrets'
+      - 'Google__ProjectId=google-project-id:latest'
+      - '--service-account'
+      - 'contoso-university-sa@$PROJECT_ID.iam.gserviceaccount.com'
+      - '--min-instances'
+      - '1'
+      - '--max-instances'
+      - '10'
+      - '--cpu'
+      - '1'
+      - '--memory'
+      - '512Mi'
+      - '--timeout'
+      - '300s'
+
+substitutions:
+  _DEPLOY_REGION: us-central1
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+images:
+  - 'gcr.io/$PROJECT_ID/contoso-university:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/contoso-university:latest'
