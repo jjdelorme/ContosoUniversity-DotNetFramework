@@ -1,0 +1,71 @@
+@model Instructor
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h2>Details</h2>
+
+<div>
+    <h4>Instructor</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.LastName)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.LastName)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.FirstMidName)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.FirstMidName)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.HireDate)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.HireDate)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.OfficeAssignment.Location)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.OfficeAssignment.Location)
+        </dd>
+        <dt class="col-sm-2">
+            Courses
+        </dt>
+        <dd class="col-sm-10">
+            @if (Model.Courses != null && Model.Courses.Any())
+            {
+                <table class="table table-sm table-borderless">
+                    <thead>
+                        <tr>
+                            <th>Course Number</th>
+                            <th>Course Title</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var course in Model.Courses)
+                        {
+                            <tr>
+                                <td>@course.CourseID</td>
+                                <td>@course.Title</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <text>No courses assigned.</text>
+            }
+        </dd>
+    </dl>
+</div>
+<p>
+    <a asp-action="Edit" asp-route-id="@Model.ID" class="btn btn-primary">Edit</a> |
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+</p>

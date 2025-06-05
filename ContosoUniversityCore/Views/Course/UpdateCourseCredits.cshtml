@@ -1,0 +1,32 @@
+@{
+    ViewData["Title"] = "Update Course Credits";
+}
+
+<h2>Update Course Credits</h2>
+
+@if (ViewData["RowsAffected"] == null)
+{
+    <form asp-action="UpdateCourseCredits" method="post">
+        @Html.AntiForgeryToken()
+        <div class="row">
+            <div class="col-md-6">
+                <p class="mt-3">
+                    Enter a number to multiply every course's credits by:
+                </p>
+                <div class="input-group mb-3">
+                    <input type="number" name="multiplier" class="form-control" placeholder="Multiplier" aria-label="Multiplier" />
+                    <button class="btn btn-primary" type="submit">Update</button>
+                </div>
+            </div>
+        </div>
+    </form>
+}
+else
+{
+    <p class="mt-3">
+        Number of rows updated: @ViewData["RowsAffected"]
+    </p>
+}
+<div class="mt-3">
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+</div>
